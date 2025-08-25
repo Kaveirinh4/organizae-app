@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nossas Contas</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet"/>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <!-- ========== GLOBAL OVERLAYS ========== -->
+    <div id="loader-overlay" class="hidden fixed inset-0 flex flex-col justify-center items-center z-50">
+        <div id="loader" class="loader"></div>
+        <p class="mt-4 text-lg font-semibold text-slate-700">Carregando...</p>
+    </div>
+
+    <div id="notification" class="hidden fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg z-50"></div>
+
+    <div id="forgot-password-modal" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
+            <h2 id="forgot-password-title" class="text-2xl font-bold text-center mb-4">Recuperar Senha</h2>
+            <p class="text-center text-sm text-slate-600 mb-6">Digite seu e-mail para receber o link de redefinição.</p>
+            <form id="forgot-password-form">
+                <label for="forgot-email" class="sr-only">Seu e-mail de cadastro</label>
+                <input type="email" id="forgot-email" name="email" placeholder="Seu e-mail de cadastro" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 transition duration-300 mb-4" required>
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transform transition-all duration-300">Enviar Link</button>
+            </form>
+            <p id="forgot-feedback" class="text-sm text-center mt-4 h-4"></p>
+            <button id="close-forgot-modal" class="w-full mt-2 text-sm text-slate-600 hover:underline">Voltar para o Login</button>
+        </div>
+    </div>
+    <!-- ========== END GLOBAL OVERLAYS ========== -->
+
+
+    <!-- ========== AUTHENTICATION ========== -->
+    <div id="auth-container" class="w-full p-4">
+        <!-- ====== Login View ====== -->
+        <div id="login-view" class="w-full">
+            <div class="max-w-md mx-auto w-full glass-panel p-8 sm:p-10 rounded-3xl shadow-2xl shadow-indigo-100">
+                <div class="text-center mb-8">
+                    <div class="flex justify-center">
+                        <img src="https://raw.githubusercontent.com/Kaveirinh4/organizae-app/refs/heads/main/Logo-site.png" alt="Logo" class="h-40">
+                    </div>
+                    <p class="mt-3 text-sm text-slate-500">Suas finanças, de forma simples e compartilhada.</p>
+                </div>
+                <h2 class="text-4xl font-extrabold text-center text-slate-900 mb-8">Bem-vindo(a) de volta!</h2>
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label for="login-email" class="sr-only">Email</label>
+                        <input type="email" id="login-email" name="email" placeholder="Email" autocomplete="email" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/80 focus:ring-2 focus:ring-indigo-500 transition duration-300" required>
+                    </div>
+                    <div class="relative">
+                        <label for="login-password" class="sr-only">Senha</label>
+                        <input type="password" id="login-password" name="password" placeholder="Senha" autocomplete="current-password" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/80 focus:ring-2 focus:ring-indigo-500 transition duration-300" required>
+                        <button type="button" id="login-password-toggle" aria-label="Mostrar senha" class="absolute top-1/2 right-3 -translate-y-1/2 p-1 cursor-pointer text-slate-400 hover:text-indigo-600 transition">
+                            <span class="material-symbols-rounded">visibility</span>
+                        </button>
+                    </div>
+                    <div class="text-right text-sm">
+                        <a href="#" id="forgot-password-link" class="font-medium text-indigo-600 hover:text-indigo-500 transition">Esqueceu a senha?</a>
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transform transition-all duration-300">Entrar</button>
+                </form>
+                <p id="login-error" class="text-red-500 text-sm text-center mt-4 h-4"></p>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Não tem uma conta?
+                    <a href="#" id="go-to-register" class="font-semibold text-indigo-600 hover:text-indigo-500 transition">Cadastre-se</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- ====== Register View ====== -->
+        <div id="register-view" class="hidden w-full">
+            <div class="max-w-md mx-auto w-full glass-panel p-8 sm:p-10 rounded-3xl shadow-2xl shadow-indigo-100">
+                <h2 class="text-4xl font-extrabold text-center text-slate-900 mb-8">Criar Nova Conta</h2>
+                <form id="register-form" class="space-y-5">
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-slate-700 mb-1">Qual o seu e-mail?</label>
+                        <input type="email" id="register-email" placeholder="Digite seu email" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/80 focus:ring-2 focus:ring-indigo-500 transition duration-300" required>
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-slate-700 mb-1">Crie uma senha segura</label>
+                        <div class="relative">
+                            <input type="password" id="register-password" name="password" placeholder="Senha (mínimo 6 caracteres)" autocomplete="new-password" class="w-full px-4 py-3 border border-slate-300 rounded-xl bg-white/80 focus:ring-2 focus:ring-indigo-500 transition duration-300" required>
+                            <button type="button" id="register-password-toggle" aria-label="Mostrar senha" class="absolute top-1/2 right-3 -translate-y-1/2 p-1 cursor-pointer text-slate-400 hover:text-indigo-600 transition">
+                                <span class="material-symbols-rounded">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" id="finalize-register-btn" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transform transition-all duration-300">Finalizar Cadastro</button>
+                </form>
+                <p id="register-error" class="text-red-500 text-sm text-center mt-4 h-4"></p>
+                <p class="text-center text-sm text-slate-600 mt-8">
+                    Já tem uma conta?
+                    <a href="#" id="go-to-login" class="font-semibold text-indigo-600 hover:text-indigo-500 transition">Entrar</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- ========== END AUTHENTICATION ========== -->
+
+
+    <!-- ========== MAIN APPLICATION ========== -->
+    <div id="app-view" class="hidden layout-container">
+        <!-- ====== Sidebar ====== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="logo-placeholder">Nossas Contas</span>
+                <button class="toggle-btn" id="toggle-sidebar-desktop" aria-label="Alternar navegação">
+                    <span class="material-symbols-rounded">menu</span>
+                </button>
+            </div>
+            <button class="new-transaction-btn" data-view="add-expense-view">
+                <span class="material-symbols-rounded">add</span>
+                <span class="item-text">Adicionar Lançamento</span>
+            </button>
+            <nav aria-label="Navegação principal">
+                <ul class="sidebar-list">
+                    <li class="sidebar-item active" data-view="dashboard-view">
+                        <span class="material-symbols-rounded">dashboard</span>
+                        <span class="item-text">Dashboard</span>
+                    </li>
+                    <li class="sidebar-item" data-view="history-view">
+                        <span class="material-symbols-rounded">history</span>
+                        <span class="item-text">Histórico</span>
+                    </li>
+                    <li class="sidebar-item" data-view="installments-view">
+                        <span class="material-symbols-rounded">receipt_long</span>
+                        <span class="item-text">Parcelamentos</span>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-item" data-view="settings-view">
+                    <span class="material-symbols-rounded">settings</span>
+                    <span class="item-text">Configurações</span>
+                </div>
+            </div>
+        </aside>
+        <!-- ====== End Sidebar ====== -->
+
+        <!-- ====== Main Content ====== -->
+        <main class="main-content">
+            <!-- ====== Header ====== -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="toggle-btn" id="toggle-sidebar-mobile" aria-label="Alternar navegação">
+                        <span class="material-symbols-rounded">menu</span>
+                    </button>
+                </div>
+                <div class="header-title" id="main-title">Dashboard</div>
+                <div class="relative">
+                    <div id="user-avatar-button" class="header-right cursor-pointer">
+                        <div class="user-info">
+                            <span id="current-user-name">Carregando...</span>
+                        </div>
+                        <div class="user-avatar" id="user-avatar-initials">
+                            <span class="material-symbols-rounded">account_circle</span>
+                        </div>
+                    </div>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg p-4 z-20">
+                        <div class="text-center border-b pb-2 mb-2">
+                            <p class="text-sm font-medium text-gray-900">Usuário</p>
+                            <p id="user-menu-email" class="text-xs text-gray-500 truncate">carregando@email.com</p>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button id="edit-profile-btn" class="flex-1 text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Editar Perfil</button>
+                            <button id="logout-btn" class="flex-1 text-center px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg">Sair</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- ====== End Header ====== -->
+
+            <!-- ====== App Views ====== -->
+            <section id="dashboard-view" class="content-view">
+                <div class="finance-card">
+                    <h2>Resumo do Mês</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <h3>Saldo Final</h3>
+                            <p id="total-balance">R$ 0,00</p>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Receitas</h3>
+                            <p id="total-income" class="income">+ R$ 0,00</p>
+                        </div>
+                        <div class="summary-item">
+                            <h3>Despesas</h3>
+                            <p id="total-expense" class="expense">- R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+                            <section id="history-view" class="content-view hidden">
+                <div class="finance-card transaction-list">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="history-title" class="text-lg font-semibold">Histórico de Lançamentos</h2>
+                        <button id="open-calendar-btn" aria-label="Selecionar data" class="p-2 rounded-full hover:bg-gray-200">
+                            <span class="material-symbols-rounded">calendar_month</span>
+                        </button>
+                    </div>
+                    <div id="transactions-list">
+                         <p id="no-transactions" class="text-center text-gray-500">Nenhum lançamento para este dia.</p>
+                    </div>
+                </div>
+            </section>
+
+                            <section id="add-expense-view" class="content-view hidden">
+                <div class="finance-card relative">
+                    <div id="no-card-warning" class="hidden absolute bottom-4 right-4 text-red-500 text-xs font-semibold flex items-center gap-1">
+                        <span class="material-symbols-rounded" style="font-size: 1em;">error</span>
+                        <span>Cadastre um cartão de crédito!</span>
+                    </div>
+                    <h2>Adicionar Lançamento</h2>
+                    <form id="expense-form" class="mt-4">
+                        <div class="form-group mb-4">
+                            <label>Tipo de Compra</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="purchase-method" value="single" checked> À vista</label>
+                                <label><input type="radio" name="purchase-method" value="installment"> Parcelado</label>
+                            </div>
+                        </div>
+                        <fieldset id="expense-fieldset">
+                            <div class="form-grid two-cols">
+                                <div class="form-group">
+                                    <label for="description">Descrição</label>
+                                    <input type="text" id="description" placeholder="Ex: Jantar, Supermercado" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="amount">Valor (R$)</label>
+                                    <input type="number" id="amount" step="0.01" placeholder="Ex: 50.00" class="form-input" required>
+                                </div>
+                            </div>
+                            <div id="installments-section" class="form-grid hidden mt-4">
+                                <div class="form-group">
+                                    <label for="installments-count">Nº de Parcelas</label>
+                                    <input type="number" id="installments-count" min="2" value="2" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-grid two-cols mt-4">
+                                <div class="form-group">
+                                    <label for="category">Categoria</label>
+                                    <select id="category" class="form-select"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="payment-method">Meio de Pagamento</label>
+                                    <select id="payment-method" class="form-select"></select>
+                                </div>
+                            </div>
+                            <div class="form-buttons">
+                                <button type="submit" class="form-button primary">Adicionar</button>
+                                <button type="button" id="cancel-add-btn" class="form-button secondary">Cancelar</button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </section>
+
+                            <section id="installments-view" class="content-view hidden">
+                <div id="installments-list" class="w-full max-w-4xl mx-auto space-y-4">
+                                    </div>
+            </section>
+
+                            <section id="settings-view" class="content-view hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full mx-auto">
+                                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="flex items-center gap-4">
+                                    <span class="material-symbols-rounded text-accent-color">category</span>
+                                    <div>
+                                        <h3 class="font-bold text-lg">Gerenciar Categorias</h3>
+                                        <p class="text-sm text-muted-text-color">Adicione, remova e reordene.</p>
+                                    </div>
+                                </div>
+                                <span class="material-symbols-rounded">expand_more</span>
+                            </div>
+                            <div class="settings-card-body">
+                                <div class="p-4">
+                                    <div class="input-group">
+                                        <input type="text" id="new-category-input" placeholder="Nova categoria" class="form-input">
+                                        <button id="add-category-btn" class="form-button primary">Adicionar</button>
+                                    </div>
+                                    <div id="category-list" class="mt-4 space-y-2" style="cursor: grab;">
+                                                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                                        <div class="settings-card">
+                             <div class="settings-card-header">
+                                <div class="flex items-center gap-4">
+                                    <span class="material-symbols-rounded text-accent-color">credit_card</span>
+                                    <div>
+                                        <h3 class="font-bold text-lg">Meios de Pagamento</h3>
+                                        <p class="text-sm text-muted-text-color">Adicione suas formas de pagamento.</p>
+                                    </div>
+                                </div>
+                                <span class="material-symbols-rounded">expand_more</span>
+                            </div>
+                            <div class="settings-card-body">
+                                <div class="p-4">
+                                    <div class="space-y-4">
+                                        <div class="form-group">
+                                            <label for="new-payment-method-name">Nome</label>
+                                            <input type="text" id="new-payment-method-name" placeholder="Ex: Cartão Nubank" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="payment-method-type">Tipo</label>
+                                            <select id="payment-method-type" class="form-select">
+                                                <option value="other">Outro</option>
+                                                <option value="credit-card">Cartão de Crédito</option>
+                                            </select>
+                                        </div>
+                                        <div id="credit-card-fields" class="hidden form-grid two-cols">
+                                            <div class="form-group">
+                                                <label for="closing-day">Dia de Fechamento</label>
+                                                <div class="relative">
+                                                    <input type="text" id="closing-day" class="form-input" readonly placeholder="Selecione">
+                                                    <button type="button" data-target="closing-day" class="day-picker-trigger absolute top-1/2 right-2 -translate-y-1/2 p-1">
+                                                        <span class="material-symbols-rounded text-gray-500">calendar_month</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="due-day">Dia de Vencimento</label>
+                                                 <div class="relative">
+                                                    <input type="text" id="due-day" class="form-input" readonly placeholder="Selecione">
+                                                    <button type="button" data-target="due-day" class="day-picker-trigger absolute top-1/2 right-2 -translate-y-1/2 p-1">
+                                                        <span class="material-symbols-rounded text-gray-500">calendar_month</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="add-payment-method-btn" class="form-button primary w-full">Adicionar</button>
+                                    </div>
+                                    <div id="payment-method-list" class="mt-4 space-y-2">
+                                                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                                        <div class="settings-card">
+                             <div class="settings-card-header">
+                                <div class="flex items-center gap-4">
+                                    <span class="material-symbols-rounded text-accent-color">tune</span>
+                                    <div>
+                                        <h3 class="font-bold text-lg">Preferências</h3>
+                                        <p class="text-sm text-muted-text-color">Ajuste o app ao seu gosto.</p>
+                                    </div>
+                                </div>
+                                <span class="material-symbols-rounded">expand_more</span>
+                            </div>
+                            <div class="settings-card-body">
+                                <div class="p-4 space-y-4">
+                                    <div class="form-group">
+                                        <label for="financial-month-start-day">Início do Mês Financeiro</label>
+                                        <select id="financial-month-start-day" class="form-select"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </section>
+        </main>
+        <!-- ====== End Main Content ====== -->
+
+        <div class="overlay" id="overlay"></div>
+    </div>
+    <!-- ========== END MAIN APPLICATION ========== -->
+
+
+    <!-- ========== MODALS ========== -->
+    <div id="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-month-display" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-xs">
+            <div class="flex justify-between items-center mb-4">
+                <button id="calendar-prev-month-btn" aria-label="Mês anterior" class="p-1 rounded-full hover:bg-gray-200">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <span id="calendar-month-display" class="font-semibold"></span>
+                <button id="calendar-next-month-btn" aria-label="Próximo mês" class="p-1 rounded-full hover:bg-gray-200">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                </button>
+            </div>
+            <div class="calendar-grid mb-4" aria-hidden="true">
+                <div class="calendar-header-day">D</div>
+                <div class="calendar-header-day">S</div>
+                <div class="calendar-header-day">T</div>
+                <div class="calendar-header-day">Q</div>
+                <div class="calendar-header-day">Q</div>
+                <div class="calendar-header-day">S</div>
+                <div class="calendar-header-day">S</div>
+            </div>
+            <div id="calendar-days-grid" class="calendar-grid">
+                        </div>
+            <button id="close-calendar-modal" class="w-full mt-4 text-sm text-slate-600 hover:underline">Fechar</button>
+        </div>
+    </div>
+
+        <div id="day-picker-modal" role="dialog" aria-modal="true" aria-labelledby="day-picker-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-xs">
+            <h3 id="day-picker-title" class="font-bold text-lg text-center mb-4">Selecione o Dia</h3>
+            <div id="day-picker-grid" class="grid grid-cols-7 gap-2">
+                        </div>
+             <button id="close-day-picker-modal" class="w-full mt-4 text-sm text-slate-600 hover:underline">Fechar</button>
+        </div>
+    </div>
+
+        <div id="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+            <h2 id="profile-modal-title" class="text-2xl font-bold text-center mb-4">Editar Perfil</h2>
+            <div class="form-group">
+                <label for="profile-name">Nome de Exibição</label>
+                <input type="text" id="profile-name" class="form-input">
+            </div>
+            <div class="form-group mt-4">
+                <label>Avatar</label>
+                <div id="emoji-grid"></div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button id="cancel-profile-btn" class="form-button secondary">Cancelar</button>
+                <button id="save-profile-btn" class="form-button primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="icon-picker-modal" role="dialog" aria-modal="true" aria-labelledby="icon-picker-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-lg">
+            <h3 id="icon-picker-title" class="font-bold text-lg text-center mb-4">Selecione um Ícone</h3>
+            <div id="icon-picker-grid" class="grid grid-cols-8 gap-4 max-h-64 overflow-y-auto">
+                <!-- Ícones serão inseridos aqui pelo JavaScript -->
+            </div>
+            <button id="close-icon-picker-modal" class="w-full mt-4 text-sm text-slate-600 hover:underline">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="script.js" type="module"></script>
+</body>
+</html>
