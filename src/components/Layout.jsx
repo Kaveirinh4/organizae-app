@@ -12,7 +12,7 @@ import {
   Target,
   Briefcase
 } from 'lucide-react';
-import { useFinance } from '../contexts/FinanceContext';
+import { useFinance } from '../FinanceContext';
 
 export const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -27,12 +27,13 @@ export const Layout = () => {
     navigate('/login');
   };
 
+  // Lista de botões que aparecem no menu lateral (Sidebar)
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/history', icon: History, label: 'Histórico' },
-    { to: '/analytics', icon: Receipt, label: 'Análise' },
-    { to: '/goals', icon: Target, label: 'Metas' },
-    { to: '/investments', icon: Briefcase, label: 'Investimentos' },
+    { to: '/extrato', icon: History, label: 'Extrato' },
+    { to: '/analise', icon: Receipt, label: 'Análise' },
+    { to: '/metas', icon: Target, label: 'Metas' },
+    { to: '/investimentos', icon: Briefcase, label: 'Investimentos' },
   ];
 
   return (
@@ -62,7 +63,7 @@ export const Layout = () => {
 
         <div className="p-4">
           <button
-            onClick={() => { navigate('/add'); setIsSidebarOpen(false); }}
+            onClick={() => { navigate('/novo-lancamento'); setIsSidebarOpen(false); }}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all duration-200"
           >
             <PlusCircle size={20} />
@@ -90,22 +91,6 @@ export const Layout = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 space-y-1">
-          <NavLink
-            to="/settings"
-            onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`
-            }
-          >
-            <Settings size={20} />
-            <span>Configurações</span>
-          </NavLink>
-        </div>
       </aside>
 
       {/* Main Content */}

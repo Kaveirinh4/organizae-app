@@ -1,18 +1,24 @@
 import { useState, useMemo } from 'react';
 import { Briefcase, TrendingUp, ShieldCheck, PieChart, PlusCircle, Trash2 } from 'lucide-react';
-import { useFinance } from '../contexts/FinanceContext';
+import { useFinance } from '../FinanceContext';
 
-export const Investments = () => {
+export const Investimentos = () => {
   const { investments, addInvestment, deleteInvestment } = useFinance();
+
+  // Controla se o formulário de adicionar novo investimento está aberto
   const [isAdding, setIsAdding] = useState(false);
+
+  // Estado local para o formulário
   const [formData, setFormData] = useState({
     name: '',
     type: 'Reserva de Emergência',
     amount: '',
   });
 
+  // Categorias permitidas
   const investmentTypes = ['Reserva de Emergência', 'Renda Fixa', 'Renda Variável'];
 
+  // Função para salvar no contexto
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.amount) return;
@@ -24,6 +30,7 @@ export const Investments = () => {
       amount: parseFloat(formData.amount),
     });
 
+    // Fecha o formulário e zera os campos
     setIsAdding(false);
     setFormData({ name: '', type: 'Reserva de Emergência', amount: '' });
   };
@@ -32,6 +39,7 @@ export const Investments = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
+  // Faz a matemática para somar todo o patrimônio e dividir pelas categorias
   const summary = useMemo(() => {
     const res = { 'Reserva de Emergência': 0, 'Renda Fixa': 0, 'Renda Variável': 0, total: 0 };
     investments.forEach(inv => {
@@ -43,6 +51,8 @@ export const Investments = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* CABEÇALHO */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           <Briefcase className="text-emerald-600" /> Carteira de Investimentos
@@ -55,6 +65,7 @@ export const Investments = () => {
         </button>
       </div>
 
+      {/* QUADROS DE RESUMO DE PATRIMÔNIO */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-slate-800 text-white p-6 rounded-2xl shadow-lg">
           <p className="text-sm font-medium text-slate-400 mb-1">Patrimônio Total</p>
@@ -74,6 +85,7 @@ export const Investments = () => {
         </div>
       </div>
 
+      {/* FORMULÁRIO (Aparece ao clicar em "Novo Ativo") */}
       {isAdding && (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -97,6 +109,7 @@ export const Investments = () => {
         </form>
       )}
 
+      {/* TABELA DE LISTAGEM DOS ATIVOS */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -112,6 +125,7 @@ export const Investments = () => {
               <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
                 <td className="p-4 font-bold text-slate-800">{inv.name}</td>
                 <td className="p-4">
+                  {/* Etiqueta colorida da Categoria */}
                   <span className={`px-2 py-1 text-xs rounded-md font-medium ${
                     inv.type === 'Reserva de Emergência' ? 'bg-emerald-50 text-emerald-700' :
                     inv.type === 'Renda Fixa' ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
@@ -127,6 +141,7 @@ export const Investments = () => {
                 </td>
               </tr>
             ))}
+            {/* Mensagem caso a tabela esteja vazia */}
             {investments.length === 0 && (
               <tr><td colSpan="4" className="p-8 text-center text-slate-500">Nenhum ativo cadastrado.</td></tr>
             )}
