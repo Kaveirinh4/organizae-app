@@ -1,16 +1,23 @@
 // ----------------------------------------------------------------------------------
-// ESTADO GLOBAL DO APLICATIVO (Onde os dados vivem)
+// ESTADO GLOBAL DO APLICATIVO (Firebase Realtime Integration)
 // ----------------------------------------------------------------------------------
-// Pense neste arquivo como o "Coração" ou a "Memória" do seu aplicativo.
-// Em vez de passar dados de tela em tela de forma complicada, nós guardamos tudo aqui.
-// Qualquer tela do aplicativo pode "pedir" dados para este contexto usando a função `useFinance()`.
-
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where
+} from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { db, auth } from './firebase';
 
-// 1. Criamos a "caixa" onde guardaremos as informações
 const FinanceContext = createContext(null);
 
-// 2. Valores Padrão Iniciais (Caso seja o primeiro acesso do usuário)
 const defaultCategories = [
   'Mercado', 'Necessidades', 'Eletrônicos', 'Assinaturas', 'Roupa',
   'Beleza', 'Presentes', 'Saúde', 'Despesas eventuais', 'Desenvolvimento',
@@ -20,115 +27,155 @@ const defaultIncomeCategories = ['Salário', 'Bônus', 'Rendimentos', 'Outros'];
 const defaultOwners = ['Casal (Comum)', 'Robert', 'Esposa'];
 const defaultPaymentMethods = ['Cartão 1 (Fixo)', 'Cartão 2 (Variável)', 'Cartão 3 (Emergência)', 'Pix/Débito'];
 
-// 3. O "Provedor" é quem vai abraçar todo o nosso App lá no App.jsx e distribuir os dados
 export const FinanceProvider = ({ children }) => {
+  // Estado do Usuário e Carregamento (Loading)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // -- VARIÁVEIS DE ESTADO (Dados do App) --
-  // Usamos useState com uma função inicial para tentar buscar os dados salvos no navegador (localStorage).
-  // Se não achar nada (app zerado), usamos listas vazias ou os valores padrão acima.
-  // IMPORTANTE: Quando o Firebase for ativado, você trocará essa lógica por buscas no Firestore!
+  // Estados dos Dados (Sincronizados com Firebase)
+  const [transactions, setTransactions] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [investments, setInvestments] = useState([]);
+  const [budgets, setBudgets] = useState({});
 
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem('@organizae:transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Estados Fixos (Categorias e Opções de Select)
+  const [categories] = useState(defaultCategories);
+  const [incomeCategories] = useState(defaultIncomeCategories);
+  const [owners] = useState(defaultOwners);
+  const [paymentMethods] = useState(defaultPaymentMethods);
 
-  const [goals, setGoals] = useState(() => {
-    const saved = localStorage.getItem('@organizae:goals');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // 1. MONITOR DE AUTENTICAÇÃO
+  useEffect(() => {
+    // Fica escutando se o usuário logou ou deslogou
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoadingAuth(false);
 
-  const [investments, setInvestments] = useState(() => {
-    const saved = localStorage.getItem('@organizae:investments');
-    return saved ? JSON.parse(saved) : [];
-  });
+      // Se deslogou, zera tudo na tela por segurança
+      if (!user) {
+        setTransactions([]);
+        setGoals([]);
+        setInvestments([]);
+        setBudgets({});
+      }
+    });
+    return unsubscribe;
+  }, []);
 
-  const [budgets, setBudgets] = useState(() => {
-    const saved = localStorage.getItem('@organizae:budgets');
-    return saved ? JSON.parse(saved) : {};
-  });
+  // 2. SINCRONIZAÇÃO EM TEMPO REAL (LISTENERS DO FIRESTORE)
+  // Só busca e sincroniza dados se tiver um usuário logado!
+  useEffect(() => {
+    if (!currentUser) return;
 
-  const [categories] = useState(() => {
-    const saved = localStorage.getItem('@organizae:categories');
-    return saved ? JSON.parse(saved) : defaultCategories;
-  });
+    const uid = currentUser.uid;
 
-  const [incomeCategories] = useState(() => {
-    const saved = localStorage.getItem('@organizae:incomeCategories');
-    return saved ? JSON.parse(saved) : defaultIncomeCategories;
-  });
+    // Escutando Transações
+    const qTransactions = query(collection(db, 'transactions'), where('userId', '==', uid));
+    const unSubTransactions = onSnapshot(qTransactions, (snapshot) => {
+      setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
 
-  const [owners] = useState(() => {
-    const saved = localStorage.getItem('@organizae:owners');
-    return saved ? JSON.parse(saved) : defaultOwners;
-  });
+    // Escutando Metas
+    const qGoals = query(collection(db, 'goals'), where('userId', '==', uid));
+    const unSubGoals = onSnapshot(qGoals, (snapshot) => {
+      setGoals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
 
-  const [paymentMethods] = useState(() => {
-    const saved = localStorage.getItem('@organizae:paymentMethods');
-    return saved ? JSON.parse(saved) : defaultPaymentMethods;
-  });
+    // Escutando Investimentos
+    const qInvestments = query(collection(db, 'investments'), where('userId', '==', uid));
+    const unSubInvestments = onSnapshot(qInvestments, (snapshot) => {
+      setInvestments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
 
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('@organizae:auth') === 'true';
-  });
+    // Escutando Orçamentos (Como é um único objeto/documento por usuário)
+    const docBudgets = doc(db, 'budgets', uid);
+    const unSubBudgets = onSnapshot(docBudgets, (docSnap) => {
+      if (docSnap.exists()) {
+        setBudgets(docSnap.data());
+      } else {
+        setBudgets({});
+      }
+    });
 
+    // Quando o componente for desmontado, para de escutar o banco de dados
+    return () => {
+      unSubTransactions();
+      unSubGoals();
+      unSubInvestments();
+      unSubBudgets();
+    };
+  }, [currentUser]);
 
-  // -- EFEITOS COLATERAIS (Salvando Dados) --
-  // O useEffect "observa" uma variável. Toda vez que a variável muda, ele roda o código dentro dele.
-  // Aqui estamos dizendo: "Toda vez que a lista de transações mudar, salve a nova lista no navegador."
-  // Se você usar o Firebase, esses arquivos poderão ser removidos, pois o Firebase salva online.
-  useEffect(() => { localStorage.setItem('@organizae:transactions', JSON.stringify(transactions)); }, [transactions]);
-  useEffect(() => { localStorage.setItem('@organizae:goals', JSON.stringify(goals)); }, [goals]);
-  useEffect(() => { localStorage.setItem('@organizae:investments', JSON.stringify(investments)); }, [investments]);
-  useEffect(() => { localStorage.setItem('@organizae:budgets', JSON.stringify(budgets)); }, [budgets]);
-  useEffect(() => { localStorage.setItem('@organizae:categories', JSON.stringify(categories)); }, [categories]);
+  // -- FUNÇÕES DE AÇÃO NO BANCO DE DADOS --
 
-
-  // -- REGRAS DE NEGÓCIO E FUNÇÕES DE MODIFICAÇÃO --
-  // Em vez de cada tela ter que inventar como salvar algo, nós criamos funções prontas aqui.
-  // As telas apenas chamam essas funções.
-
-  // Autenticação (Login e Logout simulados)
-  const login = () => {
-    setIsAuthenticated(true);
-    localStorage.setItem('@organizae:auth', 'true');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+    }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('@organizae:auth');
+  // Funções para Transações
+  const addTransaction = async (transaction) => {
+    if (!currentUser) return;
+    try {
+      // Remove o id temporário e joga pro Firebase criar o ID real
+      const { id, ...dataToSave } = transaction;
+      await addDoc(collection(db, 'transactions'), { ...dataToSave, userId: currentUser.uid });
+    } catch (e) {
+      console.error("Erro ao adicionar transação: ", e);
+    }
   };
 
-  // Funções para Transações (Lançamentos e Receitas)
-  const addTransaction = (transaction) => {
-    // Pega a lista anterior (prev) e adiciona a nova transação no final.
-    setTransactions((prev) => [...prev, transaction]);
-  };
-  const deleteTransaction = (id) => {
-    // Filtra a lista removendo o item que tem o ID selecionado.
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  const deleteTransaction = async (id) => {
+    if (!currentUser) return;
+    await deleteDoc(doc(db, 'transactions', id));
   };
 
-  // Funções para Metas Financeiras
-  const addGoal = (goal) => setGoals((prev) => [...prev, goal]);
-  const updateGoal = (id, updatedGoal) => setGoals((prev) => prev.map((g) => (g.id === id ? updatedGoal : g)));
-  const deleteGoal = (id) => setGoals((prev) => prev.filter((g) => g.id !== id));
+  // Funções para Metas
+  const addGoal = async (goal) => {
+    if (!currentUser) return;
+    const { id, ...dataToSave } = goal;
+    await addDoc(collection(db, 'goals'), { ...dataToSave, userId: currentUser.uid });
+  };
+
+  const updateGoal = async (id, updatedGoal) => {
+    if (!currentUser) return;
+    const { id: _, userId, ...dataToUpdate } = updatedGoal; // não manda id/userId no update
+    await updateDoc(doc(db, 'goals', id), dataToUpdate);
+  };
+
+  const deleteGoal = async (id) => {
+    if (!currentUser) return;
+    await deleteDoc(doc(db, 'goals', id));
+  };
 
   // Funções para Investimentos
-  const addInvestment = (investment) => setInvestments((prev) => [...prev, investment]);
-  const deleteInvestment = (id) => setInvestments((prev) => prev.filter((i) => i.id !== id));
-
-  // Funções para Orçamentos
-  const setCategoryBudget = (category, amount) => {
-    // Mantém o objeto de orçamentos anterior, e apenas atualiza o valor da categoria escolhida.
-    setBudgets((prev) => ({ ...prev, [category]: amount }));
+  const addInvestment = async (investment) => {
+    if (!currentUser) return;
+    const { id, ...dataToSave } = investment;
+    await addDoc(collection(db, 'investments'), { ...dataToSave, userId: currentUser.uid });
   };
 
-  // 4. Retornamos o Provedor. Tudo que estiver dentro do "value" estará disponível para o aplicativo inteiro!
+  const deleteInvestment = async (id) => {
+    if (!currentUser) return;
+    await deleteDoc(doc(db, 'investments', id));
+  };
+
+  // Funções para Orçamentos (Budgets salva em um único documento atrelado ao UID do usuário)
+  const setCategoryBudget = async (category, amount) => {
+    if (!currentUser) return;
+    const newBudgets = { ...budgets, [category]: amount };
+    // setDoc com merge atualiza ou cria o documento se não existir
+    await setDoc(doc(db, 'budgets', currentUser.uid), newBudgets, { merge: true });
+  };
+
   return (
     <FinanceContext.Provider
       value={{
-        // Variáveis que as telas podem ler
+        currentUser,
+        loadingAuth,
         transactions,
         goals,
         investments,
@@ -137,9 +184,7 @@ export const FinanceProvider = ({ children }) => {
         incomeCategories,
         owners,
         paymentMethods,
-        isAuthenticated,
-        // Funções que as telas podem usar para modificar os dados
-        login,
+        isAuthenticated: !!currentUser, // booleano se está logado
         logout,
         addTransaction,
         deleteTransaction,
@@ -156,8 +201,6 @@ export const FinanceProvider = ({ children }) => {
   );
 };
 
-// 5. Esta é a ferramenta mágica que criamos para as telas usarem.
-// Exemplo de uso em uma tela: const { transactions } = useFinance();
 // eslint-disable-next-line react-refresh/only-export-components
 export const useFinance = () => {
   const context = useContext(FinanceContext);
