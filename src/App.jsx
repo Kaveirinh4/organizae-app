@@ -10,6 +10,9 @@ import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { AddTransaction } from './pages/AddTransaction';
 import { ComingSoon } from './pages/ComingSoon';
+import { Goals } from './pages/Goals';
+import { Investments } from './pages/Investments';
+import { Analytics } from './pages/Analytics';
 
 function App() {
   return (
@@ -22,7 +25,9 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/history" element={<History />} />
             <Route path="/add" element={<AddTransaction />} />
-            <Route path="/installments" element={<ComingSoon title="Parcelamentos em Breve" />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/investments" element={<Investments />} />
             <Route path="/settings" element={<ComingSoon title="Configurações em Breve" />} />
           </Route>
         </Routes>

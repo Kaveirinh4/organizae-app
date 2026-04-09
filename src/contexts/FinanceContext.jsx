@@ -18,6 +18,21 @@ export const FinanceProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [goals, setGoals] = useState(() => {
+    const saved = localStorage.getItem('@organizae:goals');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [investments, setInvestments] = useState(() => {
+    const saved = localStorage.getItem('@organizae:investments');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [budgets, setBudgets] = useState(() => {
+    const saved = localStorage.getItem('@organizae:budgets');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const [categories, setCategories] = useState(() => {
     const saved = localStorage.getItem('@organizae:categories');
     return saved ? JSON.parse(saved) : defaultCategories;
@@ -45,6 +60,18 @@ export const FinanceProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('@organizae:transactions', JSON.stringify(transactions));
   }, [transactions]);
+
+  useEffect(() => {
+    localStorage.setItem('@organizae:goals', JSON.stringify(goals));
+  }, [goals]);
+
+  useEffect(() => {
+    localStorage.setItem('@organizae:investments', JSON.stringify(investments));
+  }, [investments]);
+
+  useEffect(() => {
+    localStorage.setItem('@organizae:budgets', JSON.stringify(budgets));
+  }, [budgets]);
 
   useEffect(() => {
     localStorage.setItem('@organizae:categories', JSON.stringify(categories));
@@ -80,10 +107,24 @@ export const FinanceProvider = ({ children }) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const addGoal = (goal) => setGoals((prev) => [...prev, goal]);
+  const updateGoal = (id, updatedGoal) => setGoals((prev) => prev.map((g) => (g.id === id ? updatedGoal : g)));
+  const deleteGoal = (id) => setGoals((prev) => prev.filter((g) => g.id !== id));
+
+  const addInvestment = (investment) => setInvestments((prev) => [...prev, investment]);
+  const deleteInvestment = (id) => setInvestments((prev) => prev.filter((i) => i.id !== id));
+
+  const setCategoryBudget = (category, amount) => {
+    setBudgets((prev) => ({ ...prev, [category]: amount }));
+  };
+
   return (
     <FinanceContext.Provider
       value={{
         transactions,
+        goals,
+        investments,
+        budgets,
         categories,
         incomeCategories,
         owners,
@@ -97,6 +138,12 @@ export const FinanceProvider = ({ children }) => {
         setIncomeCategories,
         setOwners,
         setPaymentMethods,
+        addGoal,
+        updateGoal,
+        deleteGoal,
+        addInvestment,
+        deleteInvestment,
+        setCategoryBudget,
       }}
     >
       {children}

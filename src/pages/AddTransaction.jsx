@@ -15,6 +15,8 @@ export const AddTransaction = () => {
     category: categories[0] || '',
     owner: owners[0] || '',
     method: paymentMethods[0] || '',
+    status: 'efetivado',
+    isRecurring: false,
   });
 
   const handleSubmit = (e) => {
@@ -124,6 +126,37 @@ export const AddTransaction = () => {
               onChange={e => setFormData({...formData, description: e.target.value})}
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+              <select
+                required
+                value={formData.status}
+                onChange={e => setFormData({...formData, status: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none"
+              >
+                <option value="efetivado">Efetivado (Pago/Recebido)</option>
+                <option value="pendente">Pendente / Agendado</option>
+              </select>
+            </div>
+
+            {/* Recorrente */}
+            {formData.type === 'expense' && (
+              <div className="flex items-center mt-6">
+                <label className="flex items-center cursor-pointer gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isRecurring}
+                    onChange={e => setFormData({...formData, isRecurring: e.target.checked})}
+                    className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Despesa Fixa (Recorrente todo mês)</span>
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">

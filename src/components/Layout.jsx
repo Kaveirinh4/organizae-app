@@ -8,7 +8,9 @@ import {
   Menu,
   LogOut,
   PlusCircle,
-  X
+  X,
+  Target,
+  Briefcase
 } from 'lucide-react';
 import { useFinance } from '../contexts/FinanceContext';
 
@@ -28,7 +30,9 @@ export const Layout = () => {
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/history', icon: History, label: 'Histórico' },
-    { to: '/installments', icon: Receipt, label: 'Parcelamentos' },
+    { to: '/analytics', icon: Receipt, label: 'Análise' },
+    { to: '/goals', icon: Target, label: 'Metas' },
+    { to: '/investments', icon: Briefcase, label: 'Investimentos' },
   ];
 
   return (
