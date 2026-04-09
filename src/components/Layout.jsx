@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   History,
   Receipt,
-  Settings,
   Menu,
   LogOut,
   PlusCircle,

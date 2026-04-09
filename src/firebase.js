@@ -6,13 +6,17 @@
 // você deve copiar as "firebaseConfig" de lá e colar aqui embaixo.
 
 // Importamos as funções necessárias da biblioteca do Firebase
+// eslint-disable-next-line no-unused-vars
 import { initializeApp } from 'firebase/app';
+// eslint-disable-next-line no-unused-vars
 import { getFirestore } from 'firebase/firestore';
+// eslint-disable-next-line no-unused-vars
 import { getAuth } from 'firebase/auth';
 
 // 1. Cole aqui a configuração do seu projeto Firebase!
 // ATENÇÃO: Nunca suba essas chaves para repositórios públicos no GitHub.
 // O ideal é usar variáveis de ambiente (ex: import.meta.env.VITE_FIREBASE_API_KEY).
+// eslint-disable-next-line no-unused-vars
 const firebaseConfig = {
   apiKey: "SUA_API_KEY_AQUI",
   authDomain: "seu-projeto.firebaseapp.com",

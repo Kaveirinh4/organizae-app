@@ -48,22 +48,22 @@ export const FinanceProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [categories, setCategories] = useState(() => {
+  const [categories] = useState(() => {
     const saved = localStorage.getItem('@organizae:categories');
     return saved ? JSON.parse(saved) : defaultCategories;
   });
 
-  const [incomeCategories, setIncomeCategories] = useState(() => {
+  const [incomeCategories] = useState(() => {
     const saved = localStorage.getItem('@organizae:incomeCategories');
     return saved ? JSON.parse(saved) : defaultIncomeCategories;
   });
 
-  const [owners, setOwners] = useState(() => {
+  const [owners] = useState(() => {
     const saved = localStorage.getItem('@organizae:owners');
     return saved ? JSON.parse(saved) : defaultOwners;
   });
 
-  const [paymentMethods, setPaymentMethods] = useState(() => {
+  const [paymentMethods] = useState(() => {
     const saved = localStorage.getItem('@organizae:paymentMethods');
     return saved ? JSON.parse(saved) : defaultPaymentMethods;
   });
@@ -158,6 +158,7 @@ export const FinanceProvider = ({ children }) => {
 
 // 5. Esta é a ferramenta mágica que criamos para as telas usarem.
 // Exemplo de uso em uma tela: const { transactions } = useFinance();
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFinance = () => {
   const context = useContext(FinanceContext);
   if (!context) {
