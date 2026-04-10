@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regra global: Só permite acesso se o usuário logado (request.auth.uid)
+    // for dono do documento que ele está tentando ler/escrever.
+
+    match /transactions/{documentId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Para criação (quando resource é null):
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /goals/{documentId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /investments/{documentId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /budgets/{userId} {
+      allow read, write: if request.auth != null && userId == request.auth.uid;
+    }
+  }
+}
